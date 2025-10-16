@@ -1,0 +1,5 @@
+How to run treelearn from powershell:
+
+powershell -ExecutionPolicy ByPass -NoExit -Command "& 'C:\ProgramData\Miniconda3\shell\condabin\conda-hook.ps1'"
+conda activate treelearn
+python tools/pipeline/pipeline.py --config configs/pipeline/pipeline.yaml
