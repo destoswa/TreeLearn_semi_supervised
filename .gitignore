@@ -7,5 +7,3 @@ models/SegmentAnyTree/model_file/*
 models/SegmentAnyTree/model_file/PointGroup-PAPER.pt
 results/*
 __pycache__/*
-*.tar
-*.pt
