@@ -1,0 +1,3 @@
+hydra:
+  run:
+    dir: ../../results/test/20250725_201947_test_multi_as_tree_semantic/0

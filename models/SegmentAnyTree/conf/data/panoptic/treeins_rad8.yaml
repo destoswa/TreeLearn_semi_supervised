@@ -1,0 +1,110 @@
+data:
+  defaults:
+  - panoptic/default
+  task: panoptic
+  class: treeins.TreeinsFusedDataset
+  dataroot: /home/pdm/results/test/20250725_201947_test_multi_as_tree_semantic/pseudo_labels/
+  sample_per_epoch: 3000
+  forest_regions: []
+  fold: []
+  first_subsampling: 0.2
+  radius: 8
+  grid_size: ${data.first_subsampling}
+  keep_instance: true
+  use_category: false
+  sampling_format: cylinder
+  mode: last
+  pre_collate_transform:
+  - transform: SaveOriginalPosId
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      mode: ${data.mode}
+  train_transforms:
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 2
+  - transform: RandomScaleAnisotropic
+    params:
+      scales:
+      - 0.9
+      - 1.1
+  - transform: RandomSymmetry
+    params:
+      axis:
+      - true
+      - false
+      - false
+  - transform: XYZRelaFeature
+    params:
+      add_x: true
+      add_y: true
+      add_z: true
+  - transform: XYZFeature
+    params:
+      add_x: false
+      add_y: false
+      add_z: true
+  - transform: AddFeatsByKeys
+    params:
+      list_add_to_x:
+      - true
+      - true
+      - true
+      - true
+      feat_names:
+      - pos_x_rela
+      - pos_y_rela
+      - pos_z_rela
+      - pos_z
+      delete_feats:
+      - true
+      - true
+      - true
+      - true
+  - transform: Center
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: true
+      mode: ${data.mode}
+  - transform: ShiftVoxels
+  test_transform:
+  - transform: XYZRelaFeature
+    params:
+      add_x: true
+      add_y: true
+      add_z: true
+  - transform: XYZFeature
+    params:
+      add_x: false
+      add_y: false
+      add_z: true
+  - transform: AddFeatsByKeys
+    params:
+      list_add_to_x:
+      - true
+      - true
+      - true
+      - true
+      feat_names:
+      - pos_x_rela
+      - pos_y_rela
+      - pos_z_rela
+      - pos_z
+      delete_feats:
+      - true
+      - true
+      - true
+      - true
+  - transform: Center
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: true
+      mode: ${data.mode}
+  val_transform: ${data.test_transform}
