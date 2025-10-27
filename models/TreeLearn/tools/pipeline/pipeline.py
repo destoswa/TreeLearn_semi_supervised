@@ -19,10 +19,15 @@ START_NUM_PREDS = 1
 
 
 
-def run_treelearn_pipeline(config, config_path=None):
+def run_treelearn_pipeline(config, src_data=None, config_path=None):
+    # check if called from the pipeline or not
+    if src_data != None:
+        config.forest_path = src_data
+        print(f"CHANGING FOREST_PATH TO {src_data}")
+        
     # make dirs
     plot_name = os.path.basename(config.forest_path)[:-4]
-    base_dir = os.path.dirname(os.path.dirname(config.forest_path))
+    base_dir = os.path.dirname(config.forest_path)
     documentation_dir = os.path.join(base_dir, 'documentation')
     unvoxelized_data_dir = os.path.join(base_dir, 'forest')
     voxelized_data_dir = os.path.join(base_dir, f'forest_voxelized{config.sample_generation.voxel_size}')
@@ -30,6 +35,13 @@ def run_treelearn_pipeline(config, config_path=None):
     results_dir_name = getattr(config.save_cfg, 'results_dir', 'results')
     results_dir = os.path.join(base_dir, results_dir_name)
 
+    print("=========\nFOLDERS:")
+    print(documentation_dir)
+    print(unvoxelized_data_dir)
+    print(voxelized_data_dir)
+    print(tiles_dir)
+    print(results_dir)
+    print("===========\n")
     os.makedirs(documentation_dir, exist_ok=True)
     os.makedirs(unvoxelized_data_dir, exist_ok=True)
     os.makedirs(voxelized_data_dir, exist_ok=True)
@@ -150,9 +162,11 @@ def run_treelearn_pipeline(config, config_path=None):
         hull_buffer_small = get_hull_buffer(coords[:, :2], config.shape_cfg.alpha, buffersize=config.shape_cfg.buffer_size_to_determine_edge_trees)
         mask_coords_at_edge = get_coords_within_shape(coords, hull_buffer_small)
         instance_preds_at_edge = np.unique(instance_preds[mask_coords_at_edge])
+        print("instance_preds_at_edge: ", instance_preds_at_edge)
         instance_preds_at_edge = np.delete(instance_preds_at_edge, np.where(instance_preds_at_edge == NON_TREES_LABEL_IN_GROUPING))
+        instance_preds_at_edge = np.delete(instance_preds_at_edge, np.where(instance_preds_at_edge == NOT_ASSIGNED_LABEL_IN_GROUPING))
         insts_not_at_edge = np.ones(len(cluster_means_within_hull))
-        insts_not_at_edge[instance_preds_at_edge-1] = 0
+        insts_not_at_edge[instance_preds_at_edge - 1] = 0
         insts_not_at_edge = insts_not_at_edge.astype('bool')
         
     # propagate predictions to original forest
@@ -192,6 +206,15 @@ def run_treelearn_pipeline(config, config_path=None):
     os.makedirs(full_dir, exist_ok=True)
 
     for save_format in config.save_cfg.save_formats:
+        # print("==============")
+        # print("Coords to return:")
+        # print("shape: ", coords_to_return.shape)
+        # print("---\nValues:")
+        # print("\tcoords:")
+        # print(coords_to_return)
+        # print("\tpreds:")
+        # print(preds_to_return.reshape(-1, 1))
+        # print("==============")
         save_data(np.hstack([coords_to_return, preds_to_return.reshape(-1, 1)]), save_format, plot_name, full_dir)
     if config.save_cfg.save_treewise:
         trees_dir = os.path.join(results_dir, 'individual_trees')
@@ -205,6 +228,10 @@ def run_treelearn_pipeline(config, config_path=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('tree_learn')
     parser.add_argument('--config', type=str, help='path to config file for pipeline')
+    parser.add_argument('--src_data', type=str, default=None)
     args = parser.parse_args()
     config = get_config(args.config)
-    run_treelearn_pipeline(config, args.config)
+    # src_data = os.path.join(get_config(args.src_data), "color_grp_full_tile_504_tile_10.laz")
+    # src_data = os.path.join(args.src_data, "color_grp_full_tile_97.laz")
+    print("src_data: ", args.src_data)
+    run_treelearn_pipeline(config, args.src_data)

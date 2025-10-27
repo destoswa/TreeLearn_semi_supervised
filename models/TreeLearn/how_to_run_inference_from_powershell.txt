@@ -3,3 +3,5 @@ How to run treelearn from powershell:
 powershell -ExecutionPolicy ByPass -NoExit -Command "& 'C:\ProgramData\Miniconda3\shell\condabin\conda-hook.ps1'"
 conda activate treelearn
 python tools/pipeline/pipeline.py --config configs/pipeline/pipeline.yaml
+
+conda run -n TreeLearn python3 -m pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126

@@ -108,6 +108,7 @@ def main(cfg):
 
         # segment
         pipeline.segment(verbose=False)
+        # quit()
         pipeline.save_log(pipeline.result_current_loop_dir, clear_after=False)
 
         # create csv for files referencing
@@ -135,7 +136,8 @@ def main(cfg):
         
         # compute stats on tiles
         pipeline.stats_on_tiles()
-
+        print("FINITO!")
+        quit()
         # train
         pipeline.prepare_data(verbose=False)
         pipeline.train(verbose=False)

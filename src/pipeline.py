@@ -177,6 +177,7 @@ class Pipeline():
                     target.write(source.read())
         if delete_zip:
             os.remove(zip_path)
+    
 
     @staticmethod
     def change_var_val_yaml(src_yaml, var, val):
@@ -531,13 +532,19 @@ class Pipeline():
                 temp_file_src = os.path.join(temp_seg_src, file)
                 shutil.copyfile(original_file_src, temp_file_src)
 
+            # return_code = self.run_subprocess(
+            #     src_script=self.segmenter_root_src,
+            #     script_name="./run_oracle_pipeline.sh",
+            #     params= [temp_seg_src, temp_seg_src],
+            #     verbose=verbose
+            #     )
             return_code = self.run_subprocess(
                 src_script=self.segmenter_root_src,
-                script_name="./run_oracle_pipeline.sh",
-                params= [temp_seg_src, temp_seg_src],
+                script_name="./run_inference_treelearn.sh",
+                params= [temp_file_src],
                 verbose=verbose
                 )
-
+            # quit()
             # catch errors
             if return_code != 0:
                 if verbose:
@@ -547,14 +554,23 @@ class Pipeline():
                 for file in pack:
                         self.problematic_tiles.append(file)
             else:
-                # unzip results
-                if verbose:
-                    print("Unzipping results...")
-                self.unzip_laz_files(
-                    zip_path=os.path.join(temp_seg_src, "results.zip"),
-                    extract_to=self.preds_src,
-                    delete_zip=True
-                    )
+                # # unzip results
+                # if verbose:
+                #     print("Unzipping results...")
+                # self.unzip_laz_files(
+                #     zip_path=os.path.join(temp_seg_src, "results.zip"),
+                #     extract_to=self.preds_src,
+                #     delete_zip=True
+                #     )
+
+                # transfer results of TreeLearn
+                shutil.copyfile(
+                    os.path.join(temp_seg_src, "results/full_forest", file),
+                    os.path.join(self.preds_src, ''.join(file.split('.')[:-1]) + '_out.laz')
+                )
+                # print("FINITO for now..")
+                # quit()
+
 
                 if verbose:
                     print("Segmentation done!")
@@ -1040,12 +1056,13 @@ class Pipeline():
         """
 
         print("Prepare data:")
-        self.run_subprocess(
-            src_script="/home/pdm/models/SegmentAnyTree/",
-            script_name="./run_sample_data_conversion.sh",
-            params= [self.result_pseudo_labels_dir],
-            verbose=verbose
-            )
+        # self.run_subprocess(
+        #     src_script="/home/pdm/models/SegmentAnyTree/",
+        #     script_name="./run_sample_data_conversion.sh",
+        #     params= [self.result_pseudo_labels_dir],
+        #     verbose=verbose
+        #     )
+        
 
     def train(self, verbose=True):
         """

@@ -23,7 +23,7 @@ N_JOBS = 10 # number of threads/processes to use for several functions that have
 # function to generate tiles
 def generate_tiles(cfg, forest_path, logger, return_type='voxelized'):
     plot_name = os.path.basename(forest_path)[:-4]
-    base_dir = os.path.dirname(os.path.dirname(forest_path))
+    base_dir = os.path.dirname(forest_path)
 
     # dirs for data saving
     voxelized_dir = osp.join(base_dir, f'forest_voxelized{cfg.voxel_size}')
@@ -167,11 +167,16 @@ def get_instances(coords, offset, semantic_prediction_logits, grouping_cfg, vert
     predictions[tree_mask] = not_assigned_label_in_grouping
 
     # get predicted instances
-    if grouping_cfg.use_hdbscan:
-        pred_instances = group_hdbscan(cluster_coords_filtered, grouping_cfg.tau_min, not_assigned_label_in_grouping, start_num_preds)
-    else:
-        pred_instances = group_dbscan(cluster_coords_filtered, grouping_cfg.tau_group, grouping_cfg.tau_min, not_assigned_label_in_grouping, start_num_preds)
-    predictions[ind_cluster] = pred_instances 
+    # print('-'*10)
+    # print("CLUSTER_COORDS_FILTERED SHAPE: ", cluster_coords_filtered.shape)
+    # print('-'*10)
+    if cluster_coords_filtered.shape[0] >= 50:
+        if grouping_cfg.use_hdbscan:
+            pred_instances = group_hdbscan(cluster_coords_filtered, grouping_cfg.tau_min, not_assigned_label_in_grouping, start_num_preds)
+        else:
+            pred_instances = group_dbscan(cluster_coords_filtered, grouping_cfg.tau_group, grouping_cfg.tau_min, not_assigned_label_in_grouping, start_num_preds)
+        predictions[ind_cluster] = pred_instances
+
     return predictions.astype(np.int64)
 
 
@@ -293,12 +298,20 @@ def get_cluster_means(coords, labels):
 def assign_remaining_points_nearest_neighbor(coords, predictions, remaining_points_idx, n_neighbors=5):
     predictions = np.copy(predictions)
     assert len(coords) == len(predictions) # input variable should be of same size
+    # print("-"*10)
+    # print("COORDs SHAPE: ", coords.shape)
+    # print("Predictions SHAPE: ", predictions.shape)
+    # print("Remaining_points_idx: ", remaining_points_idx)
     query_idx = np.argwhere(predictions == remaining_points_idx).reshape(-1)
     reference_idx = np.argwhere(predictions != remaining_points_idx).reshape(-1)
-    knn = KNeighborsClassifier(n_neighbors=n_neighbors, n_jobs=N_JOBS)
-    knn.fit(coords[reference_idx].copy(), predictions[reference_idx].copy())
-    neighbors_predictions = knn.predict(coords[query_idx].copy())
-    predictions[query_idx] = neighbors_predictions
+    # print("coords[reference_idx]: ", coords[reference_idx].shape)
+    # print("predictions[reference_idx]: ", predictions[reference_idx].shape)
+    # print("-"*10)
+    if predictions[reference_idx].shape[0] > 0:
+        knn = KNeighborsClassifier(n_neighbors=n_neighbors, n_jobs=N_JOBS)
+        knn.fit(coords[reference_idx].copy(), predictions[reference_idx].copy())
+        neighbors_predictions = knn.predict(coords[query_idx].copy())
+        predictions[query_idx] = neighbors_predictions
     return predictions.astype(np.int64)
 
 
@@ -343,11 +356,14 @@ def generate_random_color():
 
 # save point clouds in different formats
 def save_data(data, save_format, save_name, save_folder, use_offset=True):
+    if len(data) == 0:
+        return
     if save_format == "las" or save_format == "laz":
         # get points and labels
         assert data.shape[1] == 4
         points = data[:, :3]
         labels = data[:, 3]
+        labels[labels == -1] = 0
         classification = np.ones_like(labels)
         classification[labels == 0] = 2 # terrain according to For-Instance labeling convention (https://zenodo.org/records/8287792)
         classification[labels != 0] = 4 # stem according to For-Instance labeling convention (https://zenodo.org/records/8287792)
@@ -412,7 +428,7 @@ def save_treewise(coords, instance_preds, cluster_means_within_hull, insts_not_a
     for i in np.unique(instance_preds):
         pred_coord = coords[instance_preds == i]
         pred_coord = np.hstack([pred_coord, i * np.ones(len(pred_coord))[:, None]])
-        if i == non_trees_label_in_grouping:
+        if i == non_trees_label_in_grouping or i == -1:
             # use offset=false here for easy visualization of all individual trees in cloudcompare
             save_data(pred_coord, save_format, 'non_trees', plot_results_dir, use_offset=False)
             continue

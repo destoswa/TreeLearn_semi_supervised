@@ -3,7 +3,13 @@ import numpy as np
 import argparse
 import shutil
 import os
+import sys
 import laspy
+
+print(f"CURRENT DIR: {os.getcwd()}")
+print(sys.path)
+if not os.getcwd() in sys.path:
+    sys.path.append(os.getcwd())
 from tree_learn.util import (get_root_logger, make_labels_consecutive, get_config,
                              get_detections, get_detection_failures, save_data,
                              evaluate_instance_segmentation, propagate_preds, load_data)

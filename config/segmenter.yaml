@@ -1,5 +1,5 @@
 segmenter:
-  root_model_src: /home/pdm/models/SegmentAnyTree
+  root_model_src: /home/pdm/models/TreeLearn
   inference:
     config_eval_src: /home/pdm/models/SegmentAnyTree/conf/eval.yaml
     num_tiles_per_inference: 1

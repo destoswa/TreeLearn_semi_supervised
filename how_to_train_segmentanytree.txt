@@ -9,6 +9,7 @@ docker run --gpus all -it --rm -v /mnt/data/PDM_repo/Github/SegmentAnyTree:/home
 docker run --gpus all -it --rm -v D:/PDM_repo/Github/SegmentAnyTree:/home/nibio/mutable-outside-world segment-any-tree
 docker run --gpus all --runtime nvidia -it --rm -v D:/PDM_repo/Github/PDM:/home/pdm pdm
 docker run --gpus all --shm-size=8g -it --rm -v D:/PDM_repo/Github/PDM:/home/pdm pdm
+docker run --gpus all --shm-size=8g -it --name treelearn_supervised_2 -v D:\GitHubProjects\Terranum_repo\TreeSegmentation\TreeLearn_semi_supervised:/home/pdm pdm
 
 D:/PDM_repo/Github/PDM/data/flattening_predictions/predictions_2
 

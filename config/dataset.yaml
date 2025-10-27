@@ -1,4 +1,4 @@
 dataset:
   project_root_src: /home/pdm/
-  data_src: data/dataset_pipeline/test_20m
+  data_src: data/test/test_100m
   file_format: laz

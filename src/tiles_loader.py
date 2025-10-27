@@ -43,7 +43,7 @@ class TilesLoader():
         self.segmentation_results_dir = os.path.join(self.root_src, self.results_dest, "segmented")
         self.classification_results_dir = os.path.join(self.root_src, self.results_dest, "classified")
         self.data_dest = self.tilesloader_conf.tiles_destination
-        self.eval_num_per_group = self.tilesloader_conf.evaluate.num_per_group
+        # self.eval_num_per_group = self.tilesloader_conf.evaluate.num_per_group
         self.list_tiles = []
         self.list_pack_of_tiles = []
         self.problematic_tiles = []
