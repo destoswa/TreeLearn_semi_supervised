@@ -6,4 +6,5 @@ sample_generation:
   stride: 1
 
 ############ non-default args
-forest_path: 'data/val/forest/L1W.laz' # path to forest point cloud for which validation tiles are to be generated
+forest_path: 'data/val/color_grp_full_tile_97.laz' # path to forest point cloud for which validation tiles are to be generated
+# forest_path: '../../results/test/20251028_094304_test_multi_as_tree_semantic/0/temp_train/validation_set/forest/color_grp_full_tile_97.laz' # path to forest point cloud for which validation tiles are to be generated

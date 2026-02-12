@@ -64,37 +64,43 @@ def generate_random_crops(cfg):
         obj = SampleGenerator(**cfg.sample_generation.sample_generator)
 
         occupancy_path = osp.join(occupancy_dir, plot_file)
-        obj.get_occupancy_grid(occupancy_path, cfg.occupancy_res, cfg.n_points_to_calculate_occupancy, cfg.how_far_fill, cfg.min_percent_occupied_fill, ignore_for_occupancy=INSTANCE_LABEL_IGNORE_IN_RAW_DATA)
-        n_occupied_locations[plot_file.replace('.npz', '')] = np.sum(obj.occupancy_grid[:, :, 2])
+        res = obj.get_occupancy_grid(occupancy_path, cfg.occupancy_res, cfg.n_points_to_calculate_occupancy, cfg.how_far_fill, cfg.min_percent_occupied_fill, ignore_for_occupancy=INSTANCE_LABEL_IGNORE_IN_RAW_DATA)
+        if res != -1:
+            n_occupied_locations[plot_file.replace('.npz', '')] = np.sum(obj.occupancy_grid[:, :, 2])
 
     # get n_samples
+    print(n_occupied_locations.keys())
     n_samples = dict()
     n_occupied_total = sum(n_occupied_locations.values())
     for plot in n_occupied_locations:
         n_samples[plot] = int(np.round((n_occupied_locations[plot] / n_occupied_total) * cfg.n_samples_total))
-    if not sum(n_samples.values()) == cfg.n_samples_total:
-        n_samples[plot] = int(n_samples[plot] + (cfg.n_samples_total - sum(n_samples.values())))
+        if not sum(n_samples.values()) == cfg.n_samples_total:
+            n_samples[plot] = int(n_samples[plot] + (cfg.n_samples_total - sum(n_samples.values())))
 
     # generate training examples
     logger.info('getting chunks...')
-    for plot_file in tqdm(os.listdir(voxelized_dir)): 
-        # change cfg args according to current plot
-        cfg.sample_generation.sample_generator.plot_path = osp.join(voxelized_dir, plot_file)
-        cfg.sample_generation.sample_generator.features_path = osp.join(features_dir, plot_file)
-        cfg.sample_generation.sample_generator.save_dir = save_dir
-        obj = SampleGenerator(**cfg.sample_generation.sample_generator)
-        
-        # RANDOM CROP GENERATION
-        occupancy_path = osp.join(occupancy_dir, plot_file)
-        n_samples_plot = n_samples[plot_file.replace('.npz', '')]
-        # get occupancy grid
-        obj.get_occupancy_grid(occupancy_path, cfg.occupancy_res, cfg.n_points_to_calculate_occupancy, cfg.how_far_fill, cfg.min_percent_occupied_fill, ignore_for_occupancy=INSTANCE_LABEL_IGNORE_IN_RAW_DATA)
-        # generate candidates for random crops
-        obj.generate_candidates(cfg.n_samples_total, n_samples_plot, cfg.chunk_size)
-        # check whether candidates have sufficiently high occupancy
-        obj.check_occupancy(cfg.min_percent_occupied_choose)
-        # save
-        obj.save()
+    print(n_samples.keys())
+    for plot_file in tqdm(os.listdir(voxelized_dir)):
+        print(plot_file.replace('.npz', ''))
+        if plot_file.replace('.npz', '') in n_samples.keys():
+            print("Saving ", plot_file)
+            # change cfg args according to current plot
+            cfg.sample_generation.sample_generator.plot_path = osp.join(voxelized_dir, plot_file)
+            cfg.sample_generation.sample_generator.features_path = osp.join(features_dir, plot_file)
+            cfg.sample_generation.sample_generator.save_dir = save_dir
+            obj = SampleGenerator(**cfg.sample_generation.sample_generator)
+            
+            # RANDOM CROP GENERATION
+            occupancy_path = osp.join(occupancy_dir, plot_file)
+            n_samples_plot = n_samples[plot_file.replace('.npz', '')]
+            # get occupancy grid
+            obj.get_occupancy_grid(occupancy_path, cfg.occupancy_res, cfg.n_points_to_calculate_occupancy, cfg.how_far_fill, cfg.min_percent_occupied_fill, ignore_for_occupancy=INSTANCE_LABEL_IGNORE_IN_RAW_DATA)
+            # generate candidates for random crops
+            obj.generate_candidates(cfg.n_samples_total, n_samples_plot, cfg.chunk_size)
+            # check whether candidates have sufficiently high occupancy
+            obj.check_occupancy(cfg.min_percent_occupied_choose)
+            # save
+            obj.save()
 
 
 

@@ -153,6 +153,9 @@ class SampleGenerator:
 
         mask_valid_points = self.label != ignore_for_occupancy
         points = self.points[mask_valid_points]
+        print("number of points: ", len(points))
+        if len(points) == 0:
+            return -1
         idx = np.random.randint(0, len(points), size=n)
         points = points[idx]
 

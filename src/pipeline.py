@@ -568,6 +568,35 @@ class Pipeline():
                     os.path.join(temp_seg_src, "results/full_forest", file),
                     os.path.join(self.preds_src, ''.join(file.split('.')[:-1]) + '_out.laz')
                 )
+
+                # modify the columns of interest
+                samp_path = os.path.join(self.preds_src, ''.join(file.split('.')[:-1]) + '_out.laz')
+                laz_sample = laspy.read(samp_path)
+                
+                for old_name, new_name in zip(('treeID', 'classification'), ('PredInstance', 'PredSemantic')):
+                    # Copy the data
+                    data = getattr(laz_sample, old_name)
+
+                    # Add new dimension with the same dtype
+                    laz_sample.add_extra_dim(
+                        laspy.ExtraBytesParams(
+                            name=new_name,
+                            type=data.dtype,
+                            description=f"Renamed from {old_name}"
+                        )
+                    )
+
+                    # Assign the copied data to the new dimension
+                    setattr(laz_sample, new_name, data)
+
+                    # (Optional) Delete the old dimension
+                    try:
+                        laz_sample.remove_extra_dim(old_name)
+                    except:
+                        pass
+
+                    # Write to new file
+                    laz_sample.write(samp_path)
                 # print("FINITO for now..")
                 # quit()
 
@@ -994,7 +1023,7 @@ class Pipeline():
         # Find matching points between original file and cluster
         mask = np.isin(coords_original_file_view, self.multi_clusters[row_id][0])
         
-        return mask, self.classified_clusters[row_id][1]
+        return mask, self.multi_clusters[row_id][1]
 
     def stats_on_tiles(self):
         """

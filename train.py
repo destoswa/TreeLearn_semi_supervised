@@ -104,10 +104,12 @@ def main(cfg):
 
         # preprocess
         print("preprocessing...")
-        pipeline.preprocess(verbose=False)
+        if loop > 0:
+            pipeline.preprocess(verbose=False)
 
         # segment
-        pipeline.segment(verbose=False)
+        if loop > 0:
+            pipeline.segment(verbose=False)
         # quit()
         pipeline.save_log(pipeline.result_current_loop_dir, clear_after=False)
 
@@ -128,11 +130,12 @@ def main(cfg):
         df_split_data.to_csv(os.path.join(pipeline.result_pseudo_labels_dir, 'data_split_metadata.csv'), sep=',', index=False)
         
         # classify
-        pipeline.classify(verbose=False)
+        if loop > 0:
+            pipeline.classify(verbose=False)
         pipeline.save_log(pipeline.result_current_loop_dir, clear_after=False)
 
         # create pseudo-labels
-        pipeline.create_pseudo_labels(verbose=False)
+        pipeline.create_pseudo_labels(verbose=True)
         
         # compute stats on tiles
         pipeline.stats_on_tiles()

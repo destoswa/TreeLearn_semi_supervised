@@ -1,7 +1,8 @@
 # default_args is used to include configs from the _modular folder into this config. This ensures a modular way of combining different config files.
 default_args: ["configs/_modular/sample_generation.yaml"]
 
-base_dir: 'data/train' # base dir that contains a folder named "forests" which contains the forest point clouds for which training samples are to be generated
+# base_dir: '../../results/test/20251028_094304_test_multi_as_tree_semantic/0/temp_train/training_set' # base dir that contains a folder named "forests" which contains the forest point clouds for which training samples are to be generated
+base_dir: 'data/train' # base dir that contains a folder named "forests" which contains the forest point clouds for which training samples are to be generated'
 
 # further args needed for random crop generation (mostly technical details that can be left unchanged; only need to modify n_samples_total and potentially chunk_size as desired)
 occupancy_res: 1 # for each forest point cloud an xy-occupancy map is created to determine the extensions of the given forest. occupancy_res x occupancy_res is the resolution of the occupancy map in meters

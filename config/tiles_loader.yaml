@@ -1,14 +1,16 @@
 tiles_loader:
   root_src: /home/pdm
-  original_file_path: data/totile/Barmasse_2024_AllScans_Subsample4cm.las
-  results_destination: data/tiling
-  tiles_destination: ${tiles_loader.results_destination}/Barmasse_2024_AllScans_Subsample4cm_${tiles_loader.tiling.tile_size}m
+  original_file_path: data/Barmasse_2023/Barmasse_2023_AllScans_Raw_Georef.laz
+  results_destination: data/Barmasse_2023
+  tiles_destination: ${tiles_loader.results_destination}/Barmasse_2023_AllScans_Raw_Georef_wo_overlap_${tiles_loader.tiling.tile_size}m
   preprocess:
     do_remove_hanging_points: True
     do_flatten: True
     do_remove_duplicates: True
   tiling:
     tile_size: 100
+    tile_size_x: 500
+    tile_size_y: 20
     pack_size: 1
   trimming:
     method: tree  # choose between {'drop', 'tree'}

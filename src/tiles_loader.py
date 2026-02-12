@@ -13,6 +13,7 @@ import threading
 import json
 import warnings
 import zipfile
+import itertools
 
 from splitting import split_instance
 from format_conversions import convert_all_in_folder 
@@ -335,37 +336,99 @@ class TilesLoader():
         if verbose:
             print('Done!')
 
-        # create the pdal command
-        pipeline_json = {
-            "pipeline": [
-                self.data_src,
-                {
-                    "type": "filters.splitter",
-                    "length": self.tilesloader_conf.tiling.tile_size  # Tile size in the X/Y direction
-                },
-                {
-                    "type": "writers.las",
-                    "filename": output_pattern
+
+        
+        # output_pattern = "tile_{i}_{j}.laz"
+        output_pattern = os.path.join(
+            self.data_dest, 
+            os.path.basename(self.data_src).split('.')[0] + "tile_{i}_{j}.laz",
+            )
+        overlap = 0.0       # meters
+        tile_size = self.tilesloader_conf.tiling.tile_size
+
+        tiles = []
+        x_steps = int((x_max - x_min) / tile_size) + 1
+        y_steps = int((y_max - y_min) / tile_size) + 1
+        combinations = list(itertools.product(range(x_steps), range(y_steps)))
+        for _, (i,j) in tqdm(enumerate(combinations), total=len(combinations)):
+            for j in range(y_steps):
+                x0 = x_min + i * tile_size - overlap
+                x1 = x_min + (i + 1) * tile_size + overlap
+                y0 = y_min + j * tile_size - overlap
+                y1 = y_min + (j + 1) * tile_size + overlap
+
+                bounds = f"([{x0},{x1}],[{y0},{y1}])"
+                pipeline_json = {
+                    "pipeline": [
+                        self.data_src,
+                        {
+                            "type": "filters.crop",
+                            "bounds": bounds
+                        },
+                        {
+                            "type": "writers.las",
+                            "filename": output_pattern.format(i=i, j=j)
+                        }
+                    ]
                 }
-            ]
-        }
 
-        # Launch PDAL pipeline in a separate thread
-        print("Starting tiling (might take a few minutes to load the original file before starting:)")
-        pipeline_thread = threading.Thread(target=TilesLoader.run_pdal_pipeline, args=(pipeline_json,))
-        pipeline_thread.start()
+                # print(f"Processing tile ({i},{j}) with bounds {bounds}")
+                pipeline = pdal.Pipeline(json.dumps(pipeline_json))
+                pipeline.execute()
+        # # create the pdal command
+        # pipeline_json = {
+        #     "pipeline": [
+        #         self.data_src,
+        #         {
+        #             "type": "filters.splitter",
+        #             "length": self.tilesloader_conf.tiling.tile_size  # Tile size in the X/Y direction
+        #         },
+        #         {
+        #             "type": "writers.las",
+        #             "filename": output_pattern
+        #         }
+        #     ]
+        # }
 
-        # Monitor the output folder in the main thread
-        TilesLoader.monitor_progress(self.data_dest, expected_tiles=int(expected_tiles * 0.7), thread=pipeline_thread)
+        # pipeline_json = {
+        #     "pipeline": [
+        #         self.data_src,
+        #         {
+        #             "type": "filters.splitter",
+        #             "length": self.tilesloader_conf.tiling.tile_size_x  # split along X
+        #         },
+        #         {
+        #             "type": "filters.splitter",
+        #             "length": self.tilesloader_conf.tiling.tile_size_y  # split along Y
+        #         },
+        #         {
+        #             "type": "writers.las",
+        #             "filename": output_pattern
+        #         }
+        #     ]
+        # }  
 
-        pipeline_thread.join()
+# import pdal
+# import json
 
-        # Load tiles path
-        #   _verify that all the files of the destination have the same extension
-        if len(set([x.split('.')[-1] for x in os.listdir(self.data_dest)])) != 1:
-            warnings.warn('It seems like the resulting folder contains files with different extensions!')
 
-        self.list_tiles = [x for x in os.listdir(self.data_dest)]
+
+        # # Launch PDAL pipeline in a separate thread
+        # print("Starting tiling (might take a few minutes to load the original file before starting:)")
+        # pipeline_thread = threading.Thread(target=TilesLoader.run_pdal_pipeline, args=(pipeline_json,))
+        # pipeline_thread.start()
+
+        # # Monitor the output folder in the main thread
+        # TilesLoader.monitor_progress(self.data_dest, expected_tiles=int(expected_tiles * 0.7), thread=pipeline_thread)
+
+        # pipeline_thread.join()
+
+        # # Load tiles path
+        # #   _verify that all the files of the destination have the same extension
+        # if len(set([x.split('.')[-1] for x in os.listdir(self.data_dest)])) != 1:
+        #     warnings.warn('It seems like the resulting folder contains files with different extensions!')
+
+        # self.list_tiles = [x for x in os.listdir(self.data_dest)]
 
         print("Tiling complete.")
 
